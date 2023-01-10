@@ -1,0 +1,39 @@
+import "./App.css";
+import Search from "./components/search/search";
+import CurrentWeather from "./components/current-weather/current-weather";
+import Forecast from "./components/forecast/forecast";
+import { WEATHER_API_URL, WEATHER_API_KEY } from "./api";
+import { useState } from "react";
+
+function App() {
+  const [currentWeather, setCurrentWeather] = useState(null);
+  const [forecast, setForecast] = useState(null);
+  const handleOnSearchchange = (searchData) => {
+    const [latitude, longitude] = searchData.value.split(" ");
+
+    const CurrentWeatherFetch = fetch(
+      `${WEATHER_API_URL}/weather?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}&units=metric`
+    );
+    const forecastFetch = fetch(
+      `${WEATHER_API_URL}/forecast?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}&units=metric`
+    );
+    Promise.all([CurrentWeatherFetch, forecastFetch])
+      .then(async (Response) => {
+        const weatherResponse = await Response[0].json();
+        const forecastResponse = await Response[1].json();
+
+        setCurrentWeather({ city: searchData.label, ...weatherResponse });
+        setForecast({ city: searchData.label, ...forecastResponse });
+      })
+      .catch((err) => console.log(err));
+  };
+  return (
+    <div className="container">
+      <Search onSearchchange={handleOnSearchchange} />
+      {currentWeather && <CurrentWeather data={currentWeather} />}
+      {forecast && <Forecast data={forecast} />}
+    </div>
+  );
+}
+
+export default App;
